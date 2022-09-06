@@ -1,6 +1,7 @@
 import { Button } from "antd";
 import React from "react";
-import Api, { ProcurementRecord } from "./Api";
+import Api, { Buyer, ProcurementRecord } from "./Api";
+import BuyersSearchFilter from "./BuyersSearchFilter";
 import RecordSearchFilters, { SearchFilters } from "./RecordSearchFilters";
 import RecordsTable from "./RecordsTable";
 
@@ -28,6 +29,8 @@ function RecordSearchPage() {
     ProcurementRecord[] | undefined
   >();
 
+  const [buyers, setBuyers] = React.useState<Buyer[] | undefined>();
+
   const [reachedEndOfSearch, setReachedEndOfSearch] = React.useState(false);
 
   React.useEffect(() => {
@@ -49,6 +52,14 @@ function RecordSearchPage() {
     })();
   }, [searchFilters, page]);
 
+  React.useEffect(() => {
+    void (async () => {
+      const api = new Api();
+      const buyers = await api.getBuyers();
+      setBuyers(buyers);
+    })();
+  }, []);
+
   const handleChangeFilters = React.useCallback((newFilters: SearchFilters) => {
     setSearchFilters(newFilters);
     setPage(1); // reset pagination state
@@ -64,6 +75,7 @@ function RecordSearchPage() {
         filters={searchFilters}
         onChange={handleChangeFilters}
       />
+      {buyers && <BuyersSearchFilter buyers={buyers} />}
       {records && (
         <>
           <RecordsTable records={records} />

@@ -9,10 +9,7 @@ export type ProcurementRecord = {
   title: string;
   description: string;
   publishDate: string;
-  buyer: {
-    id: string;
-    name: string;
-  };
+  buyer: Buyer;
   value: number;
   currency: string;
   stage: "TENDER" | "CONTRACT";
@@ -25,6 +22,11 @@ export type SearchRecordsResponse = {
   endOfResults: boolean;
 };
 
+export type Buyer = {
+  id: string;
+  name: string;
+};
+
 class Api {
   async searchRecords(
     request: SearchRecordsRequest
@@ -35,6 +37,16 @@ class Api {
         "content-type": "application/json",
       },
       body: JSON.stringify(request),
+    });
+    return await response.json();
+  }
+
+  async getBuyers(): Promise<Buyer[]> {
+    const response = await fetch("/api/buyers", {
+      method: "GET",
+      headers: {
+        "content-type": "application/json",
+      },
     });
     return await response.json();
   }

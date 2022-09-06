@@ -2,6 +2,7 @@ import express, { request } from "express";
 
 import { Sequelize } from "sequelize-typescript";
 import {
+  BuyerDto,
   ProcurementRecordDto,
   RecordSearchRequest,
   RecordSearchResponse,
@@ -76,6 +77,12 @@ async function searchRecords(
       }
     );
   }
+}
+
+async function getBuyers(): Promise<Buyer[]> {
+  return await sequelize.query("SELECT DISTINCT * FROM buyers", {
+    model: Buyer,
+  });
 }
 
 /**
@@ -171,6 +178,13 @@ app.post("/api/records", async (req, res) => {
     ),
     endOfResults: records.length <= limit, // in this case we've reached the end of results
   };
+
+  res.json(response);
+});
+
+app.get("/api/buyers", async (req, res) => {
+  const buyers = await getBuyers();
+  const response: BuyerDto[] = buyers as BuyerDto[];
 
   res.json(response);
 });
