@@ -43,40 +43,49 @@ app.use(express.json());
 
 type RecordSearchFilters = {
   textSearch?: string;
+  selectedBuyerIds?: string[];
 };
 
 /**
  * Queries the database for procurement records according to the search filters.
  */
 async function searchRecords(
-  { textSearch }: RecordSearchFilters,
+  { textSearch, selectedBuyerIds }: RecordSearchFilters,
   offset: number,
   limit: number
 ): Promise<ProcurementRecord[]> {
-  if (textSearch) {
-    return await sequelize.query(
-      "SELECT * FROM procurement_records WHERE (title LIKE :textSearch) OR (description LIKE :textSearch) LIMIT :limit OFFSET :offset",
-      {
-        model: ProcurementRecord, // by setting this sequelize will return a list of ProcurementRecord objects
-        replacements: {
-          textSearch: `%${textSearch}%`,
-          offset: offset,
-          limit: limit,
-        },
+  const textPredicate = textSearch
+    ? `title LIKE '%${textSearch}%' OR description LIKE '%${textSearch}%'`
+    : ``;
+
+  const buyersPredicate = selectedBuyerIds.length
+    ? `buyer_id IN (${selectedBuyerIds.map((id) => `'${id}'`).join(", ")})`
+    : ``;
+  let conditions = ``;
+  if (textPredicate || buyersPredicate) {
+    conditions += `WHERE `;
+    if (textPredicate) {
+      conditions += textPredicate;
+      if (buyersPredicate) {
+        conditions += ` AND ` + buyersPredicate;
       }
-    );
-  } else {
-    return await sequelize.query(
-      "SELECT * FROM procurement_records LIMIT :limit OFFSET :offset",
-      {
-        model: ProcurementRecord,
-        replacements: {
-          offset: offset,
-          limit: limit,
-        },
-      }
-    );
+    } else {
+      conditions += buyersPredicate;
+    }
   }
+
+  return await sequelize.query(
+    `SELECT * FROM procurement_records 
+      ${conditions}
+      LIMIT :limit OFFSET :offset`,
+    {
+      model: ProcurementRecord, // by setting this sequelize will return a list of ProcurementRecord objects
+      replacements: {
+        offset: offset,
+        limit: limit,
+      },
+    }
+  );
 }
 
 async function getBuyers(): Promise<Buyer[]> {
@@ -153,7 +162,7 @@ async function serializeProcurementRecords(
 app.post("/api/records", async (req, res) => {
   const requestPayload = req.body as RecordSearchRequest;
 
-  const { limit, offset } = requestPayload;
+  const { limit, offset, textSearch, selectedBuyerIds } = requestPayload;
 
   if (limit === 0 || limit > 100) {
     res.status(400).json({ error: "Limit must be between 1 and 100." });
@@ -166,7 +175,8 @@ app.post("/api/records", async (req, res) => {
   // and the client can fetch the next page.
   const records = await searchRecords(
     {
-      textSearch: requestPayload.textSearch,
+      textSearch,
+      selectedBuyerIds,
     },
     offset,
     limit + 1

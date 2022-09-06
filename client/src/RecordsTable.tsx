@@ -42,7 +42,11 @@ function RecordsTable(props: Props) {
       {
         title: "Value",
         render: (record: ProcurementRecord) =>
-          record.value ? `${record.value} ${record.currency}` : "",
+          record.value
+            ? record.currency
+              ? `${record.value} ${record.currency}`
+              : `${record.value}`
+            : "",
       },
       {
         title: "Stage",

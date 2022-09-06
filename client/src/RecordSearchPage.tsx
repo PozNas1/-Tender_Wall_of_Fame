@@ -23,6 +23,7 @@ function RecordSearchPage() {
   const [page, setPage] = React.useState<number>(1);
   const [searchFilters, setSearchFilters] = React.useState<SearchFilters>({
     query: "",
+    buyerIds: [],
   });
 
   const [records, setRecords] = React.useState<
@@ -38,6 +39,7 @@ function RecordSearchPage() {
       const api = new Api();
       const response = await api.searchRecords({
         textSearch: searchFilters.query,
+        selectedBuyerIds: searchFilters.buyerIds,
         limit: PAGE_SIZE,
         offset: PAGE_SIZE * (page - 1),
       });
@@ -75,7 +77,13 @@ function RecordSearchPage() {
         filters={searchFilters}
         onChange={handleChangeFilters}
       />
-      {buyers && <BuyersSearchFilter buyers={buyers} />}
+      {buyers && (
+        <BuyersSearchFilter
+          filters={searchFilters}
+          onChange={handleChangeFilters}
+          buyers={buyers}
+        />
+      )}
       {records && (
         <>
           <RecordsTable records={records} />

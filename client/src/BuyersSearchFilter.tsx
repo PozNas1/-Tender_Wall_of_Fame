@@ -1,22 +1,32 @@
 import React from "react";
 import { Select, SelectProps } from "antd";
 import { Buyer } from "./Api";
+import { SearchFilters } from "./RecordSearchFilters";
 
 type Props = {
   buyers: Buyer[];
+  filters: SearchFilters;
+  onChange: (newFilters: SearchFilters) => void;
 };
-
+type Options = SelectProps["options"];
 function BuyersSearchFilter(props: Props) {
-  const { buyers } = props;
+  const { buyers, filters, onChange } = props;
 
-  const buyersOptions: SelectProps["options"] = buyers.map((buyer) => ({
+  const buyersOptions: Options = buyers.map((buyer) => ({
     label: buyer.name,
-    value: buyer.name,
+    value: buyer.id,
   }));
 
-  const handleChange = (value) => {
-    console.log(`selected ${value}`);
-  };
+  const handleChange = React.useCallback(
+    (value, options: Options) => {
+      console.log(options);
+      onChange({
+        ...filters,
+        buyerIds: options.map((e) => e.value.toString()),
+      });
+    },
+    [onChange, filters]
+  );
 
   return (
     <Select
